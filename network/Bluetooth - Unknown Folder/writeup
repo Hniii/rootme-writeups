@@ -1,0 +1,63 @@
+
+Goal: from a BTSnoop capture extract the phone MAC and device name, compute SHA1 "MAC_UPPER:MAC_UPPER…DeviceName" (MAC uppercase with colons + exact device name). Output flag: "sha1".
+
+# Tools
+
+* tshark (Wireshark CLI)
+* sha1sum, strings, sed, tr, xxd (standard Linux utils)
+
+# Steps performed
+
+1. Confirm file type
+
+bash
+file ch18.bin
+# -> "BTSnoop version 1, HCI UART (H4)"
+
+
+2. Inspect HCI/BT events with tshark and filter useful fields (BD\_ADDR and names)
+
+bash
+tshark -r ch18.bin -V 2>/dev/null \
+  | egrep -i "BD_ADDR|Remote Name|Complete Local Name|Name:" -n
+  
+  
+Relevant output lines (excerpts):
+
+```
+24:    BD_ADDR: SamsungElect_b9:4f:c6 (0c:b3:19:b9:4f:c6)
+328:Bluetooth HCI Event - Remote Name Request Complete
+333:    Remote Name: GT-S7390G
+...
+777:Bluetooth HCI Event - Remote Name Request Complete
+780:    BD_ADDR: SamsungElect_b9:4f:c6 (0c:b3:19:b9:4f:c6)
+781:    Remote Name: GT-S7390G
+```
+
+3. Extracted values
+
+* MAC (as seen in capture): `0c:b3:19:b9:4f:c6`
+* Device name (Remote Name): `GT-S7390G`
+
+4. Normalize and compute SHA1 as required by the challenge
+
+* Normalization: MAC in uppercase with colons `0C:B3:19:B9:4F:C6`. Concatenate exactly with device name: `0C:B3:19:B9:4F:C6GT-S7390G`.
+
+```bash
+echo -n "0C:B3:19:B9:4F:C6GT-S7390G" | sha1sum
+# - c...................
+```
+
+# Result / Flag
+
+```
+c......................
+```
+
+# Notes / justification
+
+* BTSnoop is an HCI-level Bluetooth capture. The device name is exposed in `Remote Name Request Complete` events and in some advertising/scan responses (Complete Local Name).
+* Always use the exact string case and punctuation when hashing. MAC must be uppercase with colons as the statement required.
+* If capture lacked `Remote Name`, check advertising packets (`Complete Local Name`) and AVPs. Use `tshark -Y bluetooth` and inspect `bluetooth.device_name`, `bluetooth.bd_addr`, or follow the relevant HCI event streams.
+
+If you want, I can turn this into a one-page PDF or a markdown file formatted for a CTF writeup template. Which format do you want?

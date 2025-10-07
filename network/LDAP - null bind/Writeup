@@ -1,0 +1,18 @@
+ 
+ tatement
+
+It seems that one of the anonymous created a new branch in the LDAP directory, somewhere in :
+dc=challenge01,dc=root-me,dc=org
+
+Get access to its data and get his email adress.
+
+
+
+here we use ldapsearch
+and read it again one of the anonumous
+one of the anonymous===?
+so the company is anonymous hihihi
+
+try this cmd: 
+
+ldapsearch -H ldap://challenge01.root-me.org:54013 -x -b "ou=anonymous,dc=challenge01,dc=root-me,dc=org"

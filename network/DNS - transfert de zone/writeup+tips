@@ -1,0 +1,86 @@
+In this challenge I issued an AXFR (zone transfer) request with this cmd:
+
+dig +tcp -p 54011 @challenge01.root-me.org ch11.challenge01.root-me.org AXFR
+
+  * `AXFR` asks the authoritative server for the full DNS zone.
+  * `+tcp` forces TCP because AXFR commonly uses TCP.
+  * `-p 54011` targets the challenge port.
+* Server answered with the zone contents. Key line:
+
+  _____
+  ch11.challenge01.root-me.org. 604800 IN TXT "DNS transfer secret key : CBk..........."
+  _____
+
+
+# Why zone transfers matter
+
+* DNS servers should restrict AXFR to trusted secondaries. Misconfigured servers will reply to anyone, leaking the whole zone (subdomains, internal hosts, TXT secrets).
+* In CTFs admins leave AXFR open intentionally. When you see an open AXFR it is high-value and usually contains the flag.
+
+# How to think as a CTF player (practical mindset)
+
+1. **Scan the problem for protocol clues.**
+   The challenge states “DNS” and provides host/port. Immediately think of DNS operations: AXFR, DNSSEC, zonewalk, TXT records, reverse lookups.
+
+2. **Use the simplest canonical tool first.**
+   `dig` is the standard. Try an AXFR directly. If it works you’re done. Always try the obvious low-effort attack first.
+
+3. **Enumerate systematically if simple fails.**
+
+   * Find authoritative nameservers (`dig NS domain` or `dig +short @host soa`), try each for AXFR.
+   * Try TCP and UDP, and unusual ports if given.
+   * Try `host -l domain server` or tools like `dnsrecon`, `dnsenum`.
+
+4. **Look for likely data fields.**
+   Flags and secrets often hide in `TXT` records, suspicious hostnames (e.g., `password.domain`), or internal A records pointing to private IPs.
+
+5. **Have a short checklist for DNS tasks**
+
+   * `dig SOA/NS` — authoritative info.
+   * `dig AXFR` (TCP) — full zone.
+   * `dig ANY` / `dig TXT` — check text records.
+   * `dnsrecon/dnsenum` — bruteforce subdomains, AXFR attempts.
+   * `nmap -sU/-sT -p <port> --script=dns-zone-transfer` — scripted tests.
+
+6. **Be efficient with tooling**
+   Use small, reliable commands you can reproduce. Save outputs (`> zone.txt`) and grep them for `TXT|flag|password|rm{`.
+
+7. **When AXFR is refused**
+
+   * Try zone walking (DNSSEC NSEC/NSEC3) to enumerate names.
+   * Brute-force subdomains with wordlists.
+   * Look for DNS misconfigurations (AXFR on secondaries, DNS dynamic updates).
+
+8. **Prioritize low-cost high-payoff attacks**
+   AXFR is cheap to try and often yields everything. Try it before heavy brute force.
+
+# Concrete commands for next time
+
+* Authoritative server and SOA:
+
+```bash
+dig +short NS ch11.challenge01.root-me.org
+dig +tcp -p 54011 @challenge01.root-me.org ch11.challenge01.root-me.org AXFR
+```
+
+* All TXT records:
+
+```bash
+dig -p 54011 @challenge01.root-me.org ch11.challenge01.root-me.org TXT
+```
+
+* Scripted/automated:
+
+```bash
+dnsrecon -d ch11.challenge01.root-me.org -a -n challenge01.root-me.org -p 54011
+nmap -sT -p 54011 --script=dns-zone-transfer --script-args='dns-zone-transfer.domain=ch11.challenge01.root-me.org' challenge01.root-me.org
+```
+
+# Tips to train
+
+* Practice on intentionally vulnerable labs: Root-me DNS tasks, HackTheBox (DNS labs), CTFWriteups.
+* Read RFC1035 and RFC5936 to know expected behavior.
+* Build a checklist for each protocol (DNS, HTTP, SMB, Kerberos) with 5–10 quick tests.
+
+
+
