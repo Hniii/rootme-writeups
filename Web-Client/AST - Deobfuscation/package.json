@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "acorn": "^8.15.0",
+    "estree-walker": "^3.0.3"
+  }
+}

@@ -1,0 +1,41 @@
+# OS / éditeurs
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Node
+node_modules/
+npm-debug.log*
+yarn.lock
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.ipynb_checkpoints
+
+# Builds / caches
+dist/
+build/
+.cache/
+
+# Logs
+logs/
+*.log
+
+# Secrets
+*.env
+.env.*
+secrets*/
+*.key
+*.pem
+
+# Data volumineuse/temp
+*.zip
+*.tar
+*.tar.gz
+*.7z
+*.pcap
+*.pcapng
